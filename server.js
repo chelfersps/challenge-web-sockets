@@ -40,6 +40,7 @@ app.prepare().then(() => {
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data);
+        const timestamp = new Date().toISOString();
         
         switch (message.type) {
           case 'join':
@@ -52,7 +53,7 @@ app.prepare().then(() => {
                   id: Date.now() + Math.random(),
                   username: message.username,
                   message: `${message.username} has joined the chat`,
-                  timestamp: new Date().toISOString()
+                  timestamp: timestamp
                 }));
               }
             });
@@ -66,7 +67,7 @@ app.prepare().then(() => {
               id: Date.now(),
               username,
               message: message.message,
-              timestamp: new Date().toISOString(),
+              timestamp: timestamp,
             };
             
             // Broadcast message to all clients
