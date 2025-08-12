@@ -111,7 +111,6 @@ export default function Chat({ username }: ChatProps) {
       type: 'message',
       username: username,
       message: newMessage.trim(),
-      timestamp: new Date().toISOString()
     }));
     
     setNewMessage('');
