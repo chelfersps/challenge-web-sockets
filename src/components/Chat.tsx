@@ -31,23 +31,89 @@ export default function Chat({ username }: ChatProps) {
 
   useEffect(() => {
     const wsUrl = 'ws://localhost:3001';
-    /*
-    *   Requirements:
-    *   - Create a new WebSocket connection using the wsUrl variable
-    *   - Add handling for the following events:
-    *     - onopen
-    *     - onclose
-    *     - onerror
-    *     - onmessage
-    *   - When a user sends a message, the system should broadcast the message to all connected users. (message type)
-    *   - When a user connects to the chat, the system should broadcast a message to all connected users. (announcement type)
-    *   - When a user disconnects from the chat, the system should broadcast a message to all connected users. (announcement type)
-    */
+    const webSocket = new WebSocket(wsUrl);
+    
+    webSocket.onopen = () => {
+      setIsConnected(true);
+      console.log('WebSocket connected');
+      
+      webSocket.send(JSON.stringify({
+        type: 'join',
+        username: username
+      }));
+    };
+    
+    webSocket.onclose = () => {
+      setIsConnected(false);
+      console.log('WebSocket disconnected');
+    };
+    
+    webSocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setIsConnected(false);
+    };
+    
+    webSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      switch (data.type) {
+        case 'userJoined':
+          const joinMessage: Message = {
+            id: data.id,
+            username: data.username,
+            message: data.message,
+            timestamp: data.timestamp,
+            type: 'announcement'
+          };
+          setMessages(prev => [...prev, joinMessage]);
+          break;
+          
+        case 'userLeft':
+          const leaveMessage: Message = {
+            id: data.id,
+            username: data.username,
+            message: data.message,
+            timestamp: data.timestamp,
+            type: 'announcement'
+          };
+          setMessages(prev => [...prev, leaveMessage]);
+          break;
+          
+        case 'message':
+          const message: Message = {
+            id: data.id,
+            username: data.username,
+            message: data.message,
+            timestamp: data.timestamp,
+            type: 'message'
+          };
+          setMessages(prev => [...prev, message]);
+          break;
+      }
+    };
+    
+    setSocket(webSocket);
+    
+    return () => {
+      if (webSocket.readyState === WebSocket.OPEN) {
+        webSocket.close();
+      }
+    };
   }, [username]);
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement sendMessage function
+    
+    if (!socket || !newMessage.trim()) return;
+    
+    
+    socket.send(JSON.stringify({
+      type: 'message',
+      username: username,
+      message: newMessage.trim(),
+    }));
+    
+    setNewMessage('');
   };
 
   const formatTime = (timestamp: string) => {
@@ -78,6 +144,7 @@ export default function Chat({ username }: ChatProps) {
             className={`flex ${msg.username === username ? 'justify-end' : 'justify-start'}`}
           >
             <div
+              key={msg.id}
               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                 msg.type === 'announcement'
                   ? 'bg-gray-200 text-gray-600 text-center mx-auto'

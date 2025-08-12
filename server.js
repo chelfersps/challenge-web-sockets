@@ -40,6 +40,7 @@ app.prepare().then(() => {
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data);
+        const timestamp = new Date().toISOString();
         
         switch (message.type) {
           case 'join':
@@ -49,7 +50,10 @@ app.prepare().then(() => {
               if (client !== ws && client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
                   type: 'userJoined',
-                  username: message.username
+                  id: Date.now() + Math.random(),
+                  username: message.username,
+                  message: `${message.username} has joined the chat`,
+                  timestamp: timestamp
                 }));
               }
             });
@@ -63,7 +67,7 @@ app.prepare().then(() => {
               id: Date.now(),
               username,
               message: message.message,
-              timestamp: new Date().toISOString(),
+              timestamp: timestamp,
             };
             
             // Broadcast message to all clients
@@ -89,7 +93,10 @@ app.prepare().then(() => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
             type: 'userLeft',
-            username: username
+            id: Date.now() + Math.random(),
+            username: username,
+            message: `${username} has left the chat`,
+            timestamp: new Date().toISOString()
           }));
         }
       });
