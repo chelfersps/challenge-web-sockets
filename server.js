@@ -49,7 +49,10 @@ app.prepare().then(() => {
               if (client !== ws && client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
                   type: 'userJoined',
-                  username: message.username
+                  id: Date.now() + Math.random(),
+                  username: message.username,
+                  message: `${message.username} has joined the chat`,
+                  timestamp: new Date().toISOString()
                 }));
               }
             });
@@ -89,7 +92,10 @@ app.prepare().then(() => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
             type: 'userLeft',
-            username: username
+            id: Date.now() + Math.random(),
+            username: username,
+            message: `${username} has left the chat`,
+            timestamp: new Date().toISOString()
           }));
         }
       });
